@@ -225,7 +225,7 @@ def find_anchor_indices_in_warping_path(warping_path: np.ndarray,
 
     Returns
     -------
-    indices : np.ndarray [shape=(2, M)]
+    indices : np.ndarray [shape=(M,)]
         Anchor indices in the ``warping_path``
     """
     indices = np.zeros(anchors.shape[1], dtype=np.int64)
