@@ -228,11 +228,14 @@ def find_anchor_indices_in_warping_path(warping_path: np.ndarray,
     indices : np.ndarray [shape=(2, M)]
         Anchor indices in the ``warping_path``
     """
-    indices = np.zeros(anchors.shape[1])
+    indices = np.zeros(anchors.shape[1], dtype=np.int64)
 
     for k in range(anchors.shape[1]):
         a = anchors[:, k]
-        indices[k] = np.where((a[0] == warping_path[0, :]) & (a[1] == warping_path[1, :]))[0]
+        matches = np.where((a[0] == warping_path[0, :]) & (a[1] == warping_path[1, :]))[0]
+        if matches.size == 0:
+            raise ValueError(f"Anchor {a.tolist()} not found in warping path")
+        indices[k] = matches[0]
 
     return indices
 
