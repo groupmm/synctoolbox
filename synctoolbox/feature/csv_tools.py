@@ -1,7 +1,7 @@
+import csv
 import os.path
 import subprocess
 
-import libfmp.c1
 import music21
 import numpy as np
 import pandas as pd
@@ -343,7 +343,7 @@ def __get_audio_duration_from_df(df: pd.DataFrame) -> float:
 
 def music_xml_to_csv_musical_time(xml, csv_filepath: str):
     """Convert a music xml file to a list of note events, with starts and durations as fractions of measures, and stores
-    it as a csv file in libfmp format.
+    it as a csv file.
 
     Args:
         xml (str or music21.stream.Score): Either a path to a music xml file or a music21.stream.Score
@@ -367,7 +367,7 @@ def music_xml_to_csv_musical_time(xml, csv_filepath: str):
     xml_data = xml_data_expanded
 
     score = []
-    # First, get starts and ends of notes in terms of quarters (similar to 'xml_to_list' in libfmp)
+    # First, get starts and ends of notes in terms of quarters.
     for part in xml_data.parts:
         instrument = __get_part_instrument_name(part)
         for note in part.flatten().notes:
@@ -419,13 +419,14 @@ def music_xml_to_csv_musical_time(xml, csv_filepath: str):
     for i in range(len(score)):
         start = get_position_in_fraction_of_measures(score[i][0])
         end = get_position_in_fraction_of_measures(score[i][1], is_end=True)
-        # To stay compatible with libfmp functions, we store this as a list with start and duration,
+        # Store this as a list with start and duration,
         # although many of our annotations are actually stored as start and end...
         score[i][0] = start
         score[i][1] = end - start
 
     score = sorted(score, key=lambda x: (x[0], x[2]))
-    libfmp.c1.list_to_csv(score, csv_filepath)
+    df = pd.DataFrame(score, columns=['Start', 'Duration', 'Pitch', 'Velocity', 'Instrument'])
+    df.to_csv(csv_filepath, sep=';', index=False, quoting=csv.QUOTE_NONNUMERIC)
 
 
 def midi_to_music_xml_musescore(midi_filepath: str, musescore_executable: str = "musescore"):

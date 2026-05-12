@@ -1,5 +1,4 @@
 import librosa
-from libfmp.c6 import compute_local_average
 import numpy as np
 
 
@@ -59,13 +58,25 @@ def spectral_flux(f_audio: np.ndarray,
 
     # Compute local average
     M = int(np.ceil(M_sec * Fs / hop_size))
-    local_average = compute_local_average(nov, M)
+    local_average = __compute_local_average(nov, M)
 
     # Subtract the local average from the novelty curve
     nov_norm = nov - local_average
     nov_norm[nov_norm < 0] = 0
     nov_norm = nov_norm / max(nov_norm)
     return nov_norm
+
+
+def __compute_local_average(x: np.ndarray, M: int) -> np.ndarray:
+    """Compute a centered local average with a fixed window denominator."""
+    L = len(x)
+    prefix_sum = np.concatenate(([0], np.cumsum(x)))
+    local_average = np.zeros(L)
+    for m in range(L):
+        a = max(m - M, 0)
+        b = min(m + M + 1, L)
+        local_average[m] = (prefix_sum[b] - prefix_sum[a]) / (2 * M + 1)
+    return local_average
 
 
 def add_decay(nov_norm: np.ndarray,
