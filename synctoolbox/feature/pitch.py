@@ -1,10 +1,10 @@
-from libfmp.b import plot_matrix
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 
 from synctoolbox.feature.filterbank import FS_PITCH, generate_list_of_downsampled_audio, get_fs_index,\
     generate_filterbank
+from synctoolbox.feature.visualization import plot_matrix
 
 PITCH_NAME_LABELS = ['   ', '   ', '   ', '   ', '   ', '   ', '   ', '   ', '   ', '   ', '   ',
                      'C0 ', '   ', '   ', '   ', '   ', '   ', '   ', '   ', '   ', '   ', '   ', '   ',

@@ -1,6 +1,7 @@
-from libfmp.c3 import compute_freq_distribution, tuning_similarity
+import librosa
 import numpy as np
 from scipy import signal
+from scipy.interpolate import interp1d
 from typing import Tuple
 
 
@@ -97,8 +98,7 @@ def estimate_tuning(x: np.ndarray,
                     local: bool = True,
                     filt: bool = True,
                     filt_len: int = 101) -> int:
-    """Compute tuning deviation in cents for an audio signal. Convenience wrapper around
-    'compute_freq_distribution' and 'tuning_similarity' from libfmp.
+    """Compute tuning deviation in cents for an audio signal.
 
     Parameters
     ----------
@@ -129,9 +129,75 @@ def estimate_tuning(x: np.ndarray,
         Estimated tuning deviation for ``x`` (in cents)
     """
     # TODO supply N in seconds and compute window size in frames via Fs
-    v, _ = compute_freq_distribution(x, Fs, N, gamma, local, filt, filt_len)
-    _, _, _, tuning, _ = tuning_similarity(v)
+    v, _ = __compute_freq_distribution(x, Fs, N, gamma, local, filt, filt_len)
+    _, _, _, tuning, _ = __tuning_similarity(v)
     return tuning
+
+
+def __compute_freq_distribution(x, Fs, N=16384, gamma=100.0, local=True, filt=True, filt_len=101):
+    """Compute an overall frequency distribution for tuning estimation."""
+    if local:
+        if N > len(x) // 2:
+            raise Exception('The signal length (%d) should be twice as long as the window length (%d)' % (len(x), N))
+        Y = np.abs(librosa.stft(x, n_fft=N, hop_length=N // 2, win_length=N,
+                                window='hann', pad_mode='constant', center=True)) ** 2
+        if gamma > 0:
+            Y = np.log(1 + gamma * Y)
+        Y = np.sum(Y, axis=1)
+        F_coef = librosa.fft_frequencies(sr=Fs, n_fft=N)
+    else:
+        N = len(x)
+        Y = np.abs(np.fft.fft(x)) / Fs
+        Y = Y[:N // 2 + 1]
+        Y = np.log(1 + gamma * Y)
+        F_coef = np.arange(N // 2 + 1).astype(float) * Fs / N
+
+    f_pitch = lambda p: 440 * 2 ** ((p - 69) / 12)
+    F_min = f_pitch(24)
+    F_max = f_pitch(108)
+    F_coef_log, F_coef_cents = __compute_f_coef_log(R=1, F_min=F_min, F_max=F_max)
+    Y_int = interp1d(F_coef, Y, kind='cubic', fill_value='extrapolate')(F_coef_log)
+    v = Y_int / np.max(Y_int)
+
+    if filt:
+        filt_kernel = np.ones(filt_len)
+        Y_smooth = signal.convolve(Y_int, filt_kernel, mode='same') / filt_len
+        Y_rectified = Y_int - Y_smooth
+        Y_rectified[Y_rectified < 0] = 0
+        v = Y_rectified / np.max(Y_rectified)
+
+    return v, F_coef_cents
+
+
+def __compute_f_coef_log(R, F_min, F_max):
+    n_bins = np.ceil(1200 * np.log2(F_max / F_min) / R).astype(int)
+    F_coef_log = 2 ** (np.arange(0, n_bins) * R / 1200) * F_min
+    F_coef_cents = 1200 * np.log2(F_coef_log / F_min)
+    return F_coef_log, F_coef_cents
+
+
+def __tuning_similarity(v):
+    theta_axis = np.arange(-50, 50)
+    num_theta = len(theta_axis)
+    sim = np.zeros(num_theta)
+    M = len(v)
+    for i in range(num_theta):
+        theta = theta_axis[i]
+        template = __template_comb(M=M, theta=theta)
+        sim[i] = np.inner(template, v)
+    sim = sim / np.max(sim)
+    ind_max = np.argmax(sim)
+    theta_max = theta_axis[ind_max]
+    template_max = __template_comb(M=M, theta=theta_max)
+    return theta_axis, sim, ind_max, theta_max, template_max
+
+
+def __template_comb(M, theta=0):
+    template = np.zeros(M)
+    peak_positions = (np.arange(0, M, 100) + theta)
+    peak_positions = np.intersect1d(peak_positions, np.arange(M)).astype(int)
+    template[peak_positions] = 1
+    return template
 
 
 def shift_chroma_vectors(chroma: np.ndarray,

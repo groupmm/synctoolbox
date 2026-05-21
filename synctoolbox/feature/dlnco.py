@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from libfmp.b import MultiplePlotsWithColorbar, plot_chromagram, plot_matrix
+
+from synctoolbox.feature.visualization import plot_chromagram
 
 
 def pitch_onset_features_to_DLNCO(f_peaks: dict,

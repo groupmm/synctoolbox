@@ -3,7 +3,7 @@ import numpy as np
 from synctoolbox.dtw.core import compute_warping_path
 from synctoolbox.dtw.cost import cosine_distance
 from synctoolbox.dtw.mrmsdtw import sync_via_mrmsdtw
-from synctoolbox.dtw.utils import compute_optimal_chroma_shift, shift_chroma_vectors
+from synctoolbox.dtw.utils import compute_optimal_chroma_shift, make_path_strictly_monotonic, shift_chroma_vectors
 
 
 def test_optimal_chroma_shift():
@@ -12,6 +12,16 @@ def test_optimal_chroma_shift():
     opt_chroma_shift = compute_optimal_chroma_shift(f_CENS_1_gt, f_CENS_2_gt)
 
     assert opt_chroma_shift == 11
+
+
+def test_make_path_strictly_monotonic():
+    path = np.array([[0, 1, 1, 2, 3, 3, 4],
+                     [0, 0, 1, 2, 2, 3, 4]])
+    strict_path = make_path_strictly_monotonic(path)
+    expected = np.array([[0, 2, 4],
+                         [0, 2, 4]])
+
+    assert np.array_equal(strict_path, expected)
 
 
 def test_dtw():

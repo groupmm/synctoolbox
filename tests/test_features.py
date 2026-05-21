@@ -12,7 +12,6 @@ from utils import dict_allclose, filterbank_equal, load_dict
 
 
 def test_tuning():
-    import libfmp.c2  # TODO: This should be removed after the new release of libfmp
     audio_1, _ = librosa.load('data_music/Schubert_D911-03_HU33.wav', sr=22050)
     audio_2, _ = librosa.load('data_music/Schubert_D911-03_SC06.wav', sr=22050)
     tuning_offset_1 = estimate_tuning(audio_1, 22050)
@@ -153,6 +152,5 @@ def test_df_to_pitch_onset_features():
     f_pitch_onset_ann = df_to_pitch_onset_features(df_annotation)
 
     dict_allclose(f_pitch_onset_ann_gt, f_pitch_onset_ann, atol=1e-5)
-
 
 

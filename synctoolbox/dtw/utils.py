@@ -1,5 +1,4 @@
 import numpy as np
-from libfmp.c3 import compute_strict_alignment_path_mask
 from typing import List
 
 from synctoolbox.dtw.core import compute_warping_path
@@ -243,8 +242,6 @@ def find_anchor_indices_in_warping_path(warping_path: np.ndarray,
 def make_path_strictly_monotonic(P: np.ndarray) -> np.ndarray:
     """Compute strict alignment path from a warping path
 
-    Wrapper around "compute_strict_alignment_path_mask" from libfmp.
-
     Parameters
     ----------
     P: np.ndarray [shape=(2, N)]
@@ -255,9 +252,14 @@ def make_path_strictly_monotonic(P: np.ndarray) -> np.ndarray:
     P_mod: np.ndarray [shape=(2, M)]
         Strict alignment path, M <= N
     """
-    P_mod = compute_strict_alignment_path_mask(P.T)
+    P_transposed = np.array(P.T, copy=True)
+    N, M = P_transposed[-1]
+    keep_mask = (P_transposed[1:, 0] > P_transposed[:-1, 0]) & (P_transposed[1:, 1] > P_transposed[:-1, 1])
+    keep_mask = np.concatenate(([True], keep_mask))
+    keep_mask[(P_transposed[:, 0] == N) | (P_transposed[:, 1] == M)] = False
+    keep_mask[-1] = True
 
-    return P_mod.T
+    return P_transposed[keep_mask, :].T
 
 
 def evaluate_synchronized_positions(ground_truth_positions: np.ndarray,
