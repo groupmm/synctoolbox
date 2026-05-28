@@ -71,7 +71,7 @@ Fully worked examples for using the sync toolbox are provided in the accompanyin
 
 There is also an API documentation for the Sync Toolbox:
 
-https://meinardmueller.github.io/synctoolbox
+https://groupmm.github.io/synctoolbox
 
 ## Contributing
 
