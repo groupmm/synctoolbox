@@ -27,7 +27,7 @@ Sync Toolbox API Documentation
 
 The source code for the package Sync Toolbox is hosted at GitHub:
 
-https://github.com/meinardmueller/synctoolbox
+https://github.com/groupmm/synctoolbox
 
 In particular, please note the provided Readme and the example notebooks.
 
